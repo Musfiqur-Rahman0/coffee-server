@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const port = 3000;
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.nliquld.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // initailize the app with express
@@ -22,6 +22,29 @@ const client = new MongoClient(uri, {
 const run = async () => {
   try {
     await client.connect();
+
+    const coffeeCollection = client.db("coffeDb").collection("coffes");
+    app.get("/coffes", async (req, res) => {
+      const cursor = coffeeCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    app.post("/coffes", async (req, res) => {
+      const newCoffe = req.body;
+      console.log(newCoffe);
+      const result = await coffeeCollection.insertOne(newCoffe);
+
+      res.send(result);
+    });
+
+    app.delete("/coffee/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await coffeeCollection.deleteOne(query);
+      res.send(result);
+    });
+
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
